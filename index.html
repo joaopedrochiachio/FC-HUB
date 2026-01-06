@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FC Career Hub Ultimate</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Inter:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-background"></div>
+    <div class="app-layout">
+        <nav class="sidebar glass-panel">
+            <div class="brand"><i class="fa-solid fa-gem"></i> <span>FC HUB</span></div>
+            <div class="season-control">
+                <label>TEMPORADA</label>
+                <div class="season-input-group">
+                    <select id="season-select" onchange="changeSeason(this.value)"></select>
+                    <button onclick="createNewSeason()" title="Nova Temporada"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="nav-links">
+                <button class="nav-btn active" onclick="navigate('dashboard')"><i class="fa-solid fa-chart-simple"></i>
+                    Visão Geral</button>
+                <button class="nav-btn" onclick="navigate('squad')"><i class="fa-solid fa-users"></i> Elenco</button>
+                <button class="nav-btn" onclick="navigate('transfers')"><i
+                        class="fa-solid fa-arrow-right-arrow-left"></i> Mercado</button>
+                <button class="nav-btn" onclick="navigate('office')"><i class="fa-solid fa-newspaper"></i>
+                    Notícias</button>
+                <div class="divider"></div>
+                <button class="nav-btn gold-btn" onclick="navigate('career')"><i class="fa-solid fa-trophy"></i>
+                    Carreira</button>
+                <button class="nav-btn admin-btn" onclick="navigate('admin')"><i class="fa-solid fa-sliders"></i>
+                    Editor</button>
+            </div>
+            <div class="sidebar-footer">
+                <button onclick="saveDataFile()" title="Salvar Backup"><i class="fa-solid fa-download"></i></button>
+                <label for="importFile" title="Carregar Backup"><i class="fa-solid fa-upload"></i></label>
+                <input type="file" id="importFile" hidden onchange="loadDataFile(this)">
+                <button onclick="resetApp()" class="danger" title="Resetar"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="club-info">
+                    <div class="logo-box"><img id="header-logo" src="" alt="FC"></div>
+                    <div>
+                        <h1 id="header-manager">MANAGER</h1><span id="header-club">CLUB NAME</span>
+                    </div>
+                </div>
+                <div class="kpi-display">
+                    <div class="kpi-item"><span>JOGOS</span><strong id="kpi-matches">0</strong></div>
+                    <div class="kpi-item green"><span>VITÓRIAS</span><strong id="kpi-wins">0</strong></div>
+                    <div class="kpi-item red"><span>DERROTAS</span><strong id="kpi-losses">0</strong></div>
+                </div>
+            </header>
+
+            <section id="dashboard" class="page active">
+                <div class="luxury-grid">
+                    <div class="card mvp-card">
+                        <div class="card-bg-icon"><i class="fa-solid fa-star"></i></div>
+                        <div class="card-header"><i class="fa-solid fa-crown"></i> CRAQUE DA TEMPORADA</div>
+                        <div class="mvp-content-flex">
+                            <div class="mvp-image-box">
+                                <img id="mvp-img" src="" style="display:none;"
+                                    onerror="this.style.display='none'; document.getElementById('mvp-placeholder').style.display='block'">
+                                <i class="fa-solid fa-user-ninja placeholder-icon" id="mvp-placeholder"></i>
+                            </div>
+                            <div class="mvp-info">
+                                <h2 id="mvp-name">-</h2>
+                                <div class="mvp-badge" id="mvp-stats">0 Gols | 0 Assists</div>
+                            </div>
+                        </div>
+                        <div class="top-list-container"><small>OUTROS DESTAQUES</small>
+                            <div id="top-players-list" class="mini-rank"></div>
+                        </div>
+                    </div>
+                    <div class="card chart-card">
+                        <div class="card-header">ANÁLISE</div>
+                        <div class="chart-box"><canvas id="goalsChart"></canvas>
+                            <div class="chart-inner"><span id="goal-diff">+0</span><small>SALDO</small></div>
+                        </div>
+                    </div>
+                    <div class="card trophy-card">
+                        <div class="card-header">SALA DE TROFÉUS</div>
+                        <div id="trophy-room" class="trophy-grid-scroll"></div>
+                    </div>
+                    <div class="card comps-card">
+                        <div class="card-header">COMPETIÇÕES</div>
+                        <div id="comps-list" class="comps-list-scroll"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="squad" class="page">
+                <div class="card full-height">
+                    <div class="card-header-row">
+                        <h3>PLANTEL</h3><span class="tag">GOLS + ASSISTÊNCIAS</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="premium-table">
+                            <thead>
+                                <tr>
+                                    <th>POS</th>
+                                    <th>NOME</th>
+                                    <th class="text-center">J</th>
+                                    <th class="text-center c-green">G</th>
+                                    <th class="text-center c-blue">A</th>
+                                    <th class="text-center">G+A</th>
+                                </tr>
+                            </thead>
+                            <tbody id="squad-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="transfers" class="page">
+                <div class="market-grid">
+                    <div class="market-col">
+                        <h3 class="col-title in">CHEGADAS</h3>
+                        <div id="transfers-in" class="transfer-feed"></div>
+                    </div>
+                    <div class="market-col">
+                        <h3 class="col-title out">SAÍDAS</h3>
+                        <div id="transfers-out" class="transfer-feed"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="office" class="page">
+                <div class="card full-height">
+                    <div class="card-header">IMPRENSA & TORCIDA</div>
+                    <button class="btn-action small" onclick="generateNews()"
+                        style="margin-bottom:20px;width:auto;padding:10px 20px;"><i
+                            class="fa-solid fa-arrows-rotate"></i> ATUALIZAR FEED</button>
+                    <div id="news-feed" class="news-container"></div>
+                </div>
+            </section>
+
+            <section id="career" class="page">
+                <div class="career-header">
+                    <div>
+                        <h2>RETROSPECTIVA</h2>
+                        <p>Histórico vitalício.</p>
+                    </div><button class="btn-gold" onclick="openPresentationModal()">GERAR CARD</button>
+                </div>
+                <div class="career-kpis">
+                    <div class="ckpi">
+                        <h3>TITULOS</h3><span id="total-titles">0</span>
+                    </div>
+                    <div class="ckpi">
+                        <h3>JOGOS</h3><span id="total-matches">0</span>
+                    </div>
+                    <div class="ckpi">
+                        <h3>VITÓRIAS</h3><span id="total-wins">0</span>
+                    </div>
+                    <div class="ckpi">
+                        <h3>GOLS</h3><span id="total-goals">0</span>
+                    </div>
+                </div>
+                <div class="card mt-20">
+                    <div class="table-wrapper">
+                        <table class="premium-table">
+                            <thead>
+                                <tr>
+                                    <th>ANO</th>
+                                    <th>CLUBE</th>
+                                    <th>J</th>
+                                    <th>V</th>
+                                    <th>E</th>
+                                    <th>D</th>
+                                    <th>TITULOS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="career-history-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="admin" class="page">
+                <div class="admin-panel">
+                    <div class="admin-header-box">
+                        <h2><i class="fa-solid fa-sliders"></i> Central de Edição</h2>
+                        <p>Gerencie dados, elenco e inteligência artificial.</p>
+                    </div>
+
+                    <div class="admin-grid">
+
+                        <div class="card span-2 highlight-border">
+                            <div class="card-header"><i class="fa-solid fa-robot"></i> IMPORTAR VIA IA (BETA)</div>
+                            <div class="scanner-container">
+                                <p>Envie um print da tabela de estatísticas (Ex: "Gabigol 38 16 2").</p>
+
+                                <div class="upload-area">
+                                    <label for="ocr-upload" class="upload-btn">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Carregar Print
+                                    </label>
+                                    <input type="file" id="ocr-upload" hidden accept="image/*"
+                                        onchange="processImage(this)">
+                                </div>
+
+                                <div id="ocr-loading" class="ocr-loading" style="display: none;">
+                                    <div class="spinner"></div>
+                                    <span id="ocr-status-text">Inicializando IA...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card span-2">
+                            <div class="card-header">CONFIGURAÇÕES DA TEMPORADA</div>
+                            <div class="form-grid-premium">
+                                <div class="input-box">
+                                    <label>Treinador</label>
+                                    <input type="text" id="edt-manager" placeholder="Nome">
+                                </div>
+                                <div class="input-box">
+                                    <label>Clube</label>
+                                    <input type="text" id="edt-club" placeholder="Time">
+                                </div>
+                                <div class="input-box">
+                                    <label>Logo (URL)</label>
+                                    <input type="text" id="edt-logo">
+                                </div>
+                                <div class="input-box">
+                                    <label>Cor Tema</label>
+                                    <input type="color" id="edt-color" style="height: 45px; padding: 0;">
+                                </div>
+                            </div>
+                            <div class="stats-row-admin">
+                                <div class="stat-mini"><label>J</label><input type="number" id="edt-matches"></div>
+                                <div class="stat-mini"><label>V</label><input type="number" id="edt-wins"></div>
+                                <div class="stat-mini"><label>E</label><input type="number" id="edt-draws"></div>
+                                <div class="stat-mini"><label>D</label><input type="number" id="edt-losses"></div>
+                                <div class="stat-mini"><label>GP</label><input type="number" id="edt-gf"></div>
+                                <div class="stat-mini"><label>GC</label><input type="number" id="edt-ga"></div>
+                                <div class="stat-mini"><label>%</label><input type="number" id="edt-conf"></div>
+                            </div>
+                            <button class="btn-save-main" onclick="saveGeneralData()">SALVAR DADOS</button>
+                        </div>
+
+                        <div class="card span-4" style="overflow: visible;">
+                            <div class="card-header highlight-text">GERENCIAR ELENCO</div>
+
+                            <div class="player-creator-box">
+                                <div class="pc-row-1">
+                                    <div class="pc-input big">
+                                        <label>NOME DO JOGADOR</label>
+                                        <input type="text" id="new-p-name" placeholder="Ex: Neymar Jr">
+                                    </div>
+                                    <div class="pc-input small">
+                                        <label>POSIÇÃO</label>
+                                        <select id="new-p-pos">
+                                            <option>ATA</option>
+                                            <option>PE</option>
+                                            <option>PD</option>
+                                            <option>MEI</option>
+                                            <option>MC</option>
+                                            <option>VOL</option>
+                                            <option>LE</option>
+                                            <option>LD</option>
+                                            <option>ZAG</option>
+                                            <option>GL</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pc-row-2">
+                                    <div class="stat-cube"><label>JOGOS</label><input type="number" id="new-p-games"
+                                            placeholder="0"></div>
+                                    <div class="stat-cube green"><label>GOLS</label><input type="number"
+                                            id="new-p-goals" placeholder="0"></div>
+                                    <div class="stat-cube blue"><label>ASSIST</label><input type="number"
+                                            id="new-p-assists" placeholder="0"></div>
+                                    <div class="pc-input medium"><label>CONQUISTA (Badge)</label><input type="text"
+                                            id="new-p-badge" placeholder="Ex: Rei da América"></div>
+                                    <button onclick="addPlayer()" class="btn-add-player"><i
+                                            class="fa-solid fa-plus"></i> CRIAR</button>
+                                </div>
+                            </div>
+
+                            <div class="squad-editor-list">
+                                <div class="list-header">
+                                    <span style="flex:2">NOME</span>
+                                    <span style="flex:0.5; text-align:center">POS</span>
+                                    <span style="flex:0.5; text-align:center">J</span>
+                                    <span style="flex:0.5; text-align:center">G</span>
+                                    <span style="flex:0.5; text-align:center">A</span>
+                                    <span style="flex:1">BADGE</span>
+                                    <span style="flex:0.8; text-align:right">AÇÕES</span>
+                                </div>
+                                <div id="admin-squad-list" class="list-body"></div>
+                            </div>
+                        </div>
+
+                        <div class="card span-2">
+                            <div class="card-header">COMPETIÇÕES</div>
+                            <div class="form-row">
+                                <input type="text" id="new-c-name" placeholder="Nome" style="flex:2">
+                                <input type="text" id="new-c-result" placeholder="Posição" style="flex:1">
+                            </div>
+                            <div class="check-row"><input type="checkbox" id="new-c-title"> <label>É Título?</label>
+                            </div>
+                            <button class="btn-action" onclick="addCompetition()">ADICIONAR</button>
+                            <div id="admin-comps-list" class="mini-list-scroll"></div>
+                        </div>
+
+                        <div class="card span-2">
+                            <div class="card-header">MERCADO</div>
+                            <div class="form-row">
+                                <select id="new-t-type">
+                                    <option value="in">COMPRA</option>
+                                    <option value="out">VENDA</option>
+                                </select>
+                                <input type="text" id="new-t-name" placeholder="Jogador">
+                            </div>
+                            <div class="form-row">
+                                <input type="text" id="new-t-team" placeholder="Time">
+                                <input type="text" id="new-t-price" placeholder="Valor">
+                            </div>
+                            <button class="btn-action" onclick="addTransfer()">REGISTRAR</button>
+                            <div id="admin-transfers-list" class="mini-list-scroll"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="presentationModal" class="modal-overlay">
+        <div class="manager-card-presentation">
+            <button class="close-modal" onclick="closePresentationModal()">&times;</button>
+            <div class="mc-header"><img id="mc-logo" src="" alt="Logo">
+                <div>
+                    <h2 id="mc-manager">Manager</h2><span id="mc-club">Club</span>
+                </div>
+            </div>
+            <div class="mc-grid">
+                <div class="mc-box"><span>JOGOS</span><strong id="mc-games">0</strong></div>
+                <div class="mc-box"><span>VITÓRIAS</span><strong id="mc-wins">0</strong></div>
+                <div class="mc-box"><span>GOLS</span><strong id="mc-goals">0</strong></div>
+                <div class="mc-box gold"><span>TÍTULOS</span><strong id="mc-titles">0</strong></div>
+            </div>
+            <div class="mc-footer">FC CAREER HUB OFFICIAL</div>
+        </div>
+    </div>
+
+    <script src="js/core.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/squad.js"></script>
+    <script src="js/market.js"></script>
+    <script src="js/news.js"></script>
+    <script src="js/career.js"></script>
+    <script src="js/editor.js"></script>
+</body>
+
+</html>
