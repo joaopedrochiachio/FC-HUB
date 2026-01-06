@@ -4,7 +4,15 @@ const DEFAULT_DB = {
     logo: "",
     mvpImage: "",
     currentSeason: "2026",
-    seasons: { "2026": { theme: "#ccff00", matches: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, confidence: 80, competitions: [], squad: [], transfers: { in: [], out: [] } } }
+    seasons: {
+        "2026": {
+            club: "CLUB NAME", // Agora salva o clube DENTRO da temporada
+            logo: "",
+            theme: "#ccff00",
+            matches: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, confidence: 80,
+            competitions: [], squad: [], transfers: { in: [], out: [] }
+        }
+    }
 };
 
 let db = {};
@@ -30,11 +38,17 @@ function saveData() {
 function updateUI() {
     const data = db.seasons[currentYear];
 
-    // Header
+    // Header (Mostra sempre os dados da temporada ATUAL selecionada)
+    // Se a temporada tiver um clube específico salvo, usa ele. Se não, usa o global.
+    const displayClub = data.club || db.club;
+    const displayLogo = data.logo || db.logo;
+
     document.getElementById('header-manager').innerText = db.manager;
-    document.getElementById('header-club').innerText = db.club;
+    document.getElementById('header-club').innerText = displayClub;
+
     const logoImg = document.getElementById('header-logo');
-    logoImg.src = (db.logo && db.logo.length > 5) ? db.logo : `https://ui-avatars.com/api/?name=${db.club.substring(0, 2)}&background=222&color=fff&size=128`;
+    logoImg.src = (displayLogo && displayLogo.length > 5) ? displayLogo : `https://ui-avatars.com/api/?name=${displayClub.substring(0, 2)}&background=222&color=fff&size=128`;
+
     document.documentElement.style.setProperty('--primary', data.theme);
 
     // KPIs
@@ -42,7 +56,7 @@ function updateUI() {
     document.getElementById('kpi-wins').innerText = data.wins;
     document.getElementById('kpi-losses').innerText = data.losses;
 
-    // Dispara atualizações dos outros módulos
+    // Dispara atualizações
     if (window.renderDashboard) renderDashboard(data);
     if (window.renderSquadList) renderSquadList(data.squad);
     if (window.renderTransfers) renderTransfers(data.transfers);
@@ -68,12 +82,23 @@ function updateSeasonSelect() {
 }
 
 function createNewSeason() {
-    const y = prompt("Ano:");
+    const y = prompt("Ano da Nova Temporada:");
     if (y && !db.seasons[y]) {
-        db.seasons[y] = JSON.parse(JSON.stringify(DEFAULT_DB.seasons["2026"]));
-        db.currentSeason = y; currentYear = y; saveData();
+        // Clona a estrutura padrão
+        const newSeason = JSON.parse(JSON.stringify(DEFAULT_DB.seasons["2026"]));
+
+        // Mantém o clube e logo atuais como ponto de partida (o usuário muda depois se trocar de time)
+        newSeason.club = db.club;
+        newSeason.logo = db.logo;
+        newSeason.theme = db.seasons[currentYear].theme; // Mantém a cor também
+
+        db.seasons[y] = newSeason;
+        db.currentSeason = y;
+        currentYear = y;
+        saveData();
     }
 }
+
 function changeSeason(y) { db.currentSeason = y; currentYear = y; saveData(); }
 function saveDataFile() { const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db)); a.download = "fc_save.json"; a.click(); }
 function loadDataFile(i) { const r = new FileReader(); r.onload = e => { try { db = JSON.parse(e.target.result); saveData(); location.reload(); } catch (e) { alert("Erro"); } }; r.readAsText(i.files[0]); }
